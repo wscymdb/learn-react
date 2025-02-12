@@ -53,40 +53,47 @@
      <div
       className="outer"
       onClick={(e) => {
-        console.log('outer 冒泡')
+        console.log('outer 冒泡「合成」')
       }}
       onClickCapture={() => {
-        console.log('outer 捕获')
+        console.log('outer 捕获「合成」')
       }}
     >
       <div
         className="inner"
         onClick={() => {
-          console.log('inner 冒泡')
+          console.log('inner 冒泡「合成」')
         }}
         onClickCapture={() => {
-          console.log('inner 捕获')
+          console.log('inner 捕获「合成」')
         }}
       ></div>
     */
-    // 上面是jsx的语法 会把onClick和onClickCapture作为属性添加到html元素中 不过因为值是函数 react回把他们转换类似下面的写法
+    // 上面是jsx的语法 React会把onClick和onClickCapture作为属性添加到html元素中 不过因为值是函数 react回把他们转换类似下面的写法
     outer.onClick = () => { console.log('outer 冒泡「合成」') }
     outer.onClickCapture = () => { console.log('outer 捕获「合成」') }
     inner.onClick = () => { console.log('inner 冒泡「合成」') }
     inner.onClickCapture = () => { console.log('inner 捕获「合成」') }
 
+    // 用于生成一个函数 用于打印事件的信息
     const generFn = (msg, needE = false) => {
       return (e) => {
         console.log(msg)
         needE && console.log(e.composedPath())
       }
     }
+
     const documentCaptureFn = generFn('document 捕获')
     const documentFn = generFn('document 冒泡')
     const bodyCaptureFn = generFn('body 捕获')
     const bodyFn = generFn('body 冒泡')
     const rootCaptureFn = generFn('root 捕获',)
     const rootFn = generFn('root 冒泡')
+    const outerCaptureFn = generFn("outer 捕获「原生」");
+    const outerFn = generFn("outer 冒泡「原生」");
+    const innerCaptureFn = generFn("inner 捕获「原生」");
+    const innerFn = generFn("inner 冒泡「原生」");
+
 
 
     document.addEventListener('click', documentCaptureFn, true)
@@ -95,10 +102,19 @@
     document.body.addEventListener('click', bodyCaptureFn, true)
     document.body.addEventListener('click', bodyFn, false)
 
+
+    outer.addEventListener("click", outerCaptureFn, true);
+    outer.addEventListener("click", outerFn, false);
+
+    inner.addEventListener("click", innerCaptureFn, true);
+    inner.addEventListener("click", innerFn, false);
+
+
+    // 这块模拟的是react给root添加的事件 优先级高于手动给root添加的事件
     root.addEventListener('click', (e) => {
-      // composedPath获取的是捕获路径
+      // e.composedPath()获取的是事件的传播路
+      // 因为获取的路径第一项是触发的目标元素 所以要反转一下
       const path = e.composedPath().reverse()
-      console.log(path)
       path.forEach((ele) => {
         let handle = ele.onClickCapture
         if (handle) handle()
@@ -107,13 +123,13 @@
 
     root.addEventListener('click', (e) => {
       const path = e.composedPath()
-      console.log(path)
       path.forEach((ele) => {
         let handle = ele.onClick
         if (handle) handle()
       })
     }, false)
 
+    // 这里是是手动添加的事件
     root.addEventListener('click', rootCaptureFn, true)
     root.addEventListener('click', rootFn, false)
 
